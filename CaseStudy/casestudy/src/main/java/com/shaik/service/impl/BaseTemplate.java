@@ -3,6 +3,8 @@ package com.shaik.service.impl;
 import com.shaik.domain.repository.BaseRepository;
 import com.shaik.exception.NotFoundException;
 import com.shaik.service.operations.BaseOperations;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.io.Serializable;
@@ -33,6 +35,7 @@ public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseO
         this.updateMapper = updateMapper;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public M create(M request) {
         E entity = entityMapper.apply(request);
@@ -40,6 +43,7 @@ public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseO
         return modelMapper.apply(entity);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public M update(ID id, M request) {
         E entity = findOne(id);
@@ -48,6 +52,7 @@ public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseO
         return modelMapper.apply(entity);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public List<M> findAll() {
         List<E> result = baseRepository.findAll();
@@ -55,12 +60,14 @@ public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseO
                 .collect(Collectors.toList());
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     @Override
     public M find(ID id) {
         E entity = findOne(id);
         return modelMapper.apply(entity);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public void delete(ID id) {
         findOne(id);

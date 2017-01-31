@@ -13,12 +13,11 @@ import java.util.List;
  */
 public abstract class BaseResource<L,ID> {
 
-    protected BaseOperations<L,ID> baseOperations;
+        protected BaseOperations<L,ID> baseOperations;
 
-
-    public BaseResource(BaseOperations<L,ID> baseOperations) {
-        this.baseOperations = baseOperations;
-    }
+        public BaseResource(BaseOperations<L,ID> baseOperations) {
+            this.baseOperations = baseOperations;
+        }
 
 
     /**

@@ -63,31 +63,38 @@ public class MeterTemplate extends BaseTemplate<Meter, EMeter, Long>
         String line = "";
         String cvsSplitBy = ",";
         List<Meter> meters = new ArrayList<>();
-        Boolean fileNotReadSuccessFully = Boolean.FALSE;
+        Boolean fileReadSuccessFully = Boolean.TRUE;
+        FileWriter fileWriter;
+        BufferedWriter bufferedWriter=null;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()));
-             FileWriter fw = new FileWriter(file.getLogPath());
-             BufferedWriter bw = new BufferedWriter(fw)) {
-
+        try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()))) {
+            fileWriter = new FileWriter(file.getLogPath());
+            bufferedWriter = new BufferedWriter(fileWriter);
             while ((line = br.readLine()) != null) {
                 String[] meter = line.split(cvsSplitBy);
-                Meter data = new Meter.Builder().connectionID(meter[0])
+                Meter data = new Meter.Builder()
+                        .connectionID(meter[0])
                         .profile(meter[1])
                         .month(Month.valueOf(meter[2]))
                         .reading(Double.parseDouble(meter[3])).build();
                 try {
                     data = create(data);
+                    meters.add(data);
                 } catch (Exception e) {
-                    bw.write(e.getMessage());
-                    fileNotReadSuccessFully = Boolean.TRUE;
+                    bufferedWriter.write(""+e.getMessage());
+                    fileReadSuccessFully = Boolean.FALSE;
                 }
-                meters.add(data);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            fileNotReadSuccessFully = Boolean.TRUE;
+            fileReadSuccessFully = Boolean.FALSE;
+            try {
+                bufferedWriter.write(""+e.getMessage());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
         }
-        if (!fileNotReadSuccessFully) {
+        if (fileReadSuccessFully) {
             File fileLocation = new File(file.getFilePath());
             fileLocation.delete();
         }

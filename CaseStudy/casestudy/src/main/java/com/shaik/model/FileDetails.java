@@ -15,7 +15,7 @@ public class FileDetails {
 
     // Defaulted to C drive, we can change by clients request
     @JsonProperty("logPath")
-    private String logPath="C:\\logs";
+    private String logPath;
 
     public FileDetails(Builder builder) {
         this.filePath = builder.filePath;

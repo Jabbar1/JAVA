@@ -65,31 +65,40 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
 
         String line = "";
         String cvsSplitBy = ",";
-        Boolean fileNotReadSuccessFully = Boolean.FALSE;
+        Boolean fileReadSuccessFully = Boolean.TRUE;
         List<Fraction> meters = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()));
-             FileWriter fw = new FileWriter(file.getLogPath());
-             BufferedWriter bw = new BufferedWriter(fw)) {
+        FileWriter fileWriter;
+        BufferedWriter bufferedWriter = null;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()))) {
+            fileWriter = new FileWriter(file.getLogPath());
+            bufferedWriter = new BufferedWriter(fileWriter);
 
             while ((line = br.readLine()) != null) {
                 String[] fraction = line.split(cvsSplitBy);
                 Fraction data = new Fraction.Builder()
-                        .profile(fraction[0])
-                        .month(Month.valueOf(fraction[1]))
+                        .month(Month.valueOf(fraction[0]))
+                        .profile(fraction[1])
                         .fraction(Double.parseDouble(fraction[2])).build();
                 try {
                     data = create(data);
+                    meters.add(data);
                 } catch (Exception e) {
-                    fileNotReadSuccessFully = Boolean.TRUE;
-                    bw.write(e.getMessage());
+                    fileReadSuccessFully = Boolean.FALSE;
+                    bufferedWriter.write(""+e.getMessage());
                 }
-                meters.add(data);
+
             }
         } catch (Exception e) {
             e.printStackTrace();
-            fileNotReadSuccessFully = Boolean.TRUE;
+            try {
+                bufferedWriter.write(""+e.getMessage());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            fileReadSuccessFully = Boolean.FALSE;
         }
-        if (!fileNotReadSuccessFully) {
+        if (fileReadSuccessFully) {
             File fileLocation = new File(file.getFilePath());
             fileLocation.delete();
         }
