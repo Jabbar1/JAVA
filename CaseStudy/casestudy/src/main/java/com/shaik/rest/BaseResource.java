@@ -1,6 +1,7 @@
 package com.shaik.rest;
 
-import com.shaik.service.operations.CrudOperations;
+import com.shaik.model.FileDetails;
+import com.shaik.service.operations.BaseOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -10,13 +11,13 @@ import java.util.List;
 /**
  * Created by jabbars on 1/23/2017.
  */
-public abstract class CrudRestResource<L,ID> {
+public abstract class BaseResource<L,ID> {
 
-    protected CrudOperations<L,ID> crudOperations;
+    protected BaseOperations<L,ID> baseOperations;
 
 
-    public CrudRestResource(CrudOperations<L,ID> crudOperations) {
-        this.crudOperations = crudOperations;
+    public BaseResource(BaseOperations<L,ID> baseOperations) {
+        this.baseOperations = baseOperations;
     }
 
 
@@ -34,7 +35,7 @@ public abstract class CrudRestResource<L,ID> {
     )
     @ResponseStatus(HttpStatus.CREATED)
     public L create(@RequestBody L meter) {
-        return crudOperations.create(meter);
+        return baseOperations.create(meter);
     }
 
     /**
@@ -53,7 +54,7 @@ public abstract class CrudRestResource<L,ID> {
     @ResponseStatus(HttpStatus.OK)
     public L update(@PathVariable(value = "id")ID id,
                         @RequestBody L meter) {
-        return crudOperations.update(id,meter);
+        return baseOperations.update(id,meter);
     }
 
     /**
@@ -68,7 +69,7 @@ public abstract class CrudRestResource<L,ID> {
     )
     @ResponseStatus(HttpStatus.OK)
     public List<L> findAll() {
-        return crudOperations.findAll();
+        return baseOperations.findAll();
     }
 
     /**
@@ -84,7 +85,7 @@ public abstract class CrudRestResource<L,ID> {
     )
     @ResponseStatus(HttpStatus.OK)
     public L find(@PathVariable("id") ID id) {
-        return crudOperations.find(id);
+        return baseOperations.find(id);
     }
 
     /**
@@ -99,22 +100,22 @@ public abstract class CrudRestResource<L,ID> {
     )
     @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable("id") ID id) {
-        crudOperations.delete(id);
+        baseOperations.delete(id);
     }
 
     /**
-     * Read Data Fro CSV file from the given Location
      *
-     * @param filePath
+     * @return
      */
     @RequestMapping(
             value = "/file",
             method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.OK)
-    public List<L> delete(@RequestParam("filePath")String filePath) {
-       return crudOperations.readFromCsv(filePath);
+    public List<L> readDataFromFile(@RequestBody FileDetails details) {
+       return baseOperations.readFromCsv(details);
     }
 
 }

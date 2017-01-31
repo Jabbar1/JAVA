@@ -8,6 +8,7 @@ import com.shaik.exception.DataDuplicateException;
 import com.shaik.exception.InvalidInputException;
 import com.shaik.exception.NotFoundException;
 import com.shaik.mapper.MeterMapper;
+import com.shaik.model.FileDetails;
 import com.shaik.model.Meter;
 import com.shaik.service.operations.MeterOperations;
 import org.springframework.stereotype.Service;
@@ -15,26 +16,25 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.*;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by jabbars on 1/23/2017.
  */
 @Service
 @Named("caseStudyMeterTemplate")
-public class MeterTemplate implements MeterOperations<Meter, Long> {
+public class MeterTemplate extends BaseTemplate<Meter, EMeter, Long>
+        implements MeterOperations<Meter, Long> {
 
     private MeterRepository meterRepository;
     private FractionRepository fractionRepository;
 
-    @Inject
     public MeterTemplate(MeterRepository meterRepository, FractionRepository fractionRepository) {
+        super(meterRepository, MeterMapper.entity, MeterMapper.model, MeterMapper.update);
         this.meterRepository = meterRepository;
         this.fractionRepository = fractionRepository;
     }
@@ -42,55 +42,31 @@ public class MeterTemplate implements MeterOperations<Meter, Long> {
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public Meter create(Meter request) {
+        // Validations
         isMeterDataValid(request.getId(), request);
-        EMeter meter = MeterMapper.map(request);
-        meter = meterRepository.save(meter);
-        return MeterMapper.map(meter);
+        return super.create(request);
     }
 
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public Meter update(Long id, Meter request) {
-        isMeterDataValid(id, request);
-        EMeter dBMeter = findOne(id);
         // Validations
-        dBMeter = MeterMapper.map(dBMeter, request);
-        dBMeter = meterRepository.save(dBMeter);
-        return MeterMapper.map(dBMeter);
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
-    public List<Meter> findAll() {
-        List<EMeter> meters = meterRepository.findAll();
-        return meters.stream().map(MeterMapper::map).collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
-    public Meter find(Long id) {
-        EMeter meter = findOne(id);
-        return MeterMapper.map(meter);
+        isMeterDataValid(id, request);
+        return super.update(id, request);
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void delete(Long id) {
-        find(id);
-        meterRepository.delete(id);
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.REQUIRED)
-    public List<Meter> readFromCsv(String filePath) {
+    public List<Meter> readFromCsv(FileDetails file) {
 
         String line = "";
         String cvsSplitBy = ",";
         List<Meter> meters = new ArrayList<>();
+        Boolean fileNotReadSuccessFully = Boolean.FALSE;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath));
-             FileWriter fw = new FileWriter(FILENAME);
+        try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()));
+             FileWriter fw = new FileWriter(file.getLogPath());
              BufferedWriter bw = new BufferedWriter(fw)) {
 
             while ((line = br.readLine()) != null) {
@@ -103,21 +79,19 @@ public class MeterTemplate implements MeterOperations<Meter, Long> {
                     data = create(data);
                 } catch (Exception e) {
                     bw.write(e.getMessage());
+                    fileNotReadSuccessFully = Boolean.TRUE;
                 }
                 meters.add(data);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            fileNotReadSuccessFully = Boolean.TRUE;
+        }
+        if (!fileNotReadSuccessFully) {
+            File fileLocation = new File(file.getFilePath());
+            fileLocation.delete();
         }
         return meters;
-    }
-
-    private EMeter findOne(Long id) {
-        EMeter meter = meterRepository.findOne(id);
-        if (ObjectUtils.isEmpty(meter)) {
-            throw new NotFoundException("Given Meter Reading with ID " + id + " Not found. pLease provide valid data");
-        }
-        return meter;
     }
 
     private void isMeterDataValid(Long id, Meter request) {

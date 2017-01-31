@@ -2,8 +2,6 @@ package com.shaik.rest;
 
 import com.shaik.model.Meter;
 import com.shaik.service.operations.MeterOperations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -14,7 +12,7 @@ import javax.inject.Named;
  */
 @RestController("MeterResource")
 @RequestMapping(value = "v1/api/meter")
-public class MeterResource extends CrudRestResource<Meter,Long> {
+public class MeterResource extends BaseResource<Meter,Long> {
 
     MeterOperations<Meter,Long> meterMeterOperations;
 

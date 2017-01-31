@@ -2,8 +2,6 @@ package com.shaik.rest;
 
 import com.shaik.model.Fraction;
 import com.shaik.service.operations.FractionOperations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -14,7 +12,7 @@ import javax.inject.Named;
  */
 @RestController("FractionResource")
 @RequestMapping(value = "v1/api/fraction")
-public class FractionResource extends CrudRestResource<Fraction,Long> {
+public class FractionResource extends BaseResource<Fraction,Long> {
 
     FractionOperations<Fraction,Long> fractionFractionOperations;
 

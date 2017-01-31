@@ -3,14 +3,13 @@ package com.shaik.service.impl;
 import com.shaik.domain.entity.EFraction;
 import com.shaik.domain.repository.FractionRepository;
 import com.shaik.exception.FractionExceedException;
-import com.shaik.exception.NotFoundException;
 import com.shaik.mapper.FractionMapper;
+import com.shaik.model.FileDetails;
 import com.shaik.model.Fraction;
 import com.shaik.service.operations.FractionOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,12 +24,14 @@ import java.util.stream.Collectors;
  */
 @Service
 @Named("useCaseFractionTemplate")
-public class FractionTemplate implements FractionOperations<Fraction, Long> {
+public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
+        implements FractionOperations<Fraction, Long> {
 
     private FractionRepository fractionRepository;
 
     @Inject
     public FractionTemplate(FractionRepository fractionRepository) {
+        super(fractionRepository, FractionMapper.entity, FractionMapper.model, FractionMapper.update);
         this.fractionRepository = fractionRepository;
     }
 
@@ -38,9 +39,7 @@ public class FractionTemplate implements FractionOperations<Fraction, Long> {
     @Transactional(propagation = Propagation.REQUIRED)
     public Fraction create(Fraction request) {
         isFractionLimitExceedsForProfile(request.getProfile());
-        EFraction fraction = FractionMapper.map(request);
-        fraction = fractionRepository.save(fraction);
-        return FractionMapper.map(fraction);
+        return super.create(request);
     }
 
     @Override
@@ -48,9 +47,7 @@ public class FractionTemplate implements FractionOperations<Fraction, Long> {
     public Fraction update(Long id, Fraction request) {
         EFraction fraction = findOne(id);
         isFractionLimitExceedsForProfile(request.getProfile());
-        fraction = FractionMapper.map(fraction, request);
-        fraction = fractionRepository.save(fraction);
-        return FractionMapper.map(fraction);
+        return super.update(id, request);
     }
 
     @Override
@@ -58,34 +55,20 @@ public class FractionTemplate implements FractionOperations<Fraction, Long> {
     public List<Fraction> findAll() {
         List<EFraction> fractions = fractionRepository.findAllByOrderByMonth();
         return fractions.stream()
-                .map(FractionMapper::map)
+                .map(FractionMapper.entity::apply)
                 .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
-    public Fraction find(Long id) {
-        EFraction fraction = findOne(id);
-        return FractionMapper.map(fraction);
-    }
-
-    @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void delete(Long id) {
-        findOne(id);
-        fractionRepository.delete(id);
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.REQUIRED)
-    public List<Fraction> readFromCsv(String filePath) {
+    public List<Fraction> readFromCsv(FileDetails file) {
 
         String line = "";
         String cvsSplitBy = ",";
         Boolean fileNotReadSuccessFully = Boolean.FALSE;
         List<Fraction> meters = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath));
-             FileWriter fw = new FileWriter(FILENAME);
+        try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()));
+             FileWriter fw = new FileWriter(file.getLogPath());
              BufferedWriter bw = new BufferedWriter(fw)) {
 
             while ((line = br.readLine()) != null) {
@@ -106,20 +89,11 @@ public class FractionTemplate implements FractionOperations<Fraction, Long> {
             e.printStackTrace();
             fileNotReadSuccessFully = Boolean.TRUE;
         }
-        if (fileNotReadSuccessFully) {
-            File file = new File(filePath);
-            file.delete();
+        if (!fileNotReadSuccessFully) {
+            File fileLocation = new File(file.getFilePath());
+            fileLocation.delete();
         }
         return meters;
-    }
-
-
-    private EFraction findOne(Long id) {
-        EFraction fraction = fractionRepository.findOne(id);
-        if (ObjectUtils.isEmpty(fraction)) {
-            throw new NotFoundException("Given Fraction for a Profile Not exist with ID " + id + ", Please Provide Valid data");
-        }
-        return fraction;
     }
 
     private void isFractionLimitExceedsForProfile(String profile) {

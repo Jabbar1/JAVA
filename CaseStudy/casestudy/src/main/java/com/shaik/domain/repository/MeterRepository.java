@@ -11,7 +11,7 @@ import java.util.List;
  * Created by jabbars on 1/23/2017.
  */
 @Repository
-public interface MeterRepository extends JpaRepository<EMeter, Long> {
+public interface MeterRepository extends BaseRepository<EMeter, Long> {
     EMeter findByProfileAndMonthAndConnectionId(String profile, Month month, String connectionID);
     List<EMeter> findByConnectionIdOrderByMonth(String connectionId);
 }

@@ -11,7 +11,7 @@ import java.util.List;
  * Created by jabbars on 1/23/2017.
  */
 @Repository
-public interface FractionRepository extends JpaRepository<EFraction,Long> {
+public interface FractionRepository extends BaseRepository<EFraction,Long> {
 
     List<EFraction> findByProfile(String profile);
     List<EFraction> findAllByOrderByMonth();
