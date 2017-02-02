@@ -1,5 +1,5 @@
 
-Spring-Boot based PostgreSQL Rest Example that Handles CRUD operations in a Single Class
+###Spring-Boot based PostgreSQL Rest Example that Handles CRUD operations in a Single Class
 ```
 Spring Boot + SpringDataJPA + Hibernate + PostgreSQL 9.4 + RESTful Services
 ```
