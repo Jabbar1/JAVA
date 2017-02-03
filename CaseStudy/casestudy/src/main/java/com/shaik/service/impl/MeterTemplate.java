@@ -11,11 +11,13 @@ import com.shaik.mapper.MeterMapper;
 import com.shaik.model.FileDetails;
 import com.shaik.model.Meter;
 import com.shaik.service.operations.MeterOperations;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import org.slf4j.Logger;
 import javax.inject.Named;
 import java.io.*;
 import java.time.Month;
@@ -29,6 +31,8 @@ import java.util.List;
 @Named("caseStudyMeterTemplate")
 public class MeterTemplate extends BaseTemplate<Meter, EMeter, Long>
         implements MeterOperations<Meter, Long> {
+
+    Logger LOGGER = LoggerFactory.getLogger(MeterTemplate.class);
 
     private MeterRepository meterRepository;
     private FractionRepository fractionRepository;
@@ -58,14 +62,14 @@ public class MeterTemplate extends BaseTemplate<Meter, EMeter, Long>
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public List<Meter> readFromCsv(FileDetails file) {
+    public List<Meter> readFromCsv(FileDetails file) throws IOException {
 
         String line = "";
         String cvsSplitBy = ",";
         List<Meter> meters = new ArrayList<>();
         Boolean fileReadSuccessFully = Boolean.TRUE;
         FileWriter fileWriter;
-        BufferedWriter bufferedWriter=null;
+        BufferedWriter bufferedWriter = null;
 
         try (BufferedReader br = new BufferedReader(new FileReader(file.getFilePath()))) {
             fileWriter = new FileWriter(file.getLogPath());
@@ -81,44 +85,36 @@ public class MeterTemplate extends BaseTemplate<Meter, EMeter, Long>
                     data = create(data);
                     meters.add(data);
                 } catch (Exception e) {
-                    bufferedWriter.write(""+e.getMessage());
+                    bufferedWriter.write("" + e.getMessage());
                     fileReadSuccessFully = Boolean.FALSE;
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             fileReadSuccessFully = Boolean.FALSE;
-            try {
-                bufferedWriter.write(""+e.getMessage());
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+            bufferedWriter.write("" + e.getMessage());
         }
         if (fileReadSuccessFully) {
             File fileLocation = new File(file.getFilePath());
-            fileLocation.delete();
+            if (fileLocation.delete()){
+                bufferedWriter.write("FILE deleted successfully");
+            }
         }
         return meters;
     }
 
     private void isMeterDataValid(Long id, Meter request) {
         // Validations
-        ///v0
         EMeter meter = meterRepository.findByProfileAndMonthAndConnectionId(request.getProfile(), request.getMonth(), request.getConnectionID());
         if (!ObjectUtils.isEmpty(meter) && !ObjectUtils.nullSafeEquals(meter.getId(), id)) {
             throw new DataDuplicateException(" A Reading exists with given data, should be unique");
         }
-        //v1
         List<EMeter> meters = meterRepository.findByConnectionIdOrderByMonth(request.getConnectionID());
         if (!meters.isEmpty() && meters.get(meters.size() - 1).getReading() < request.getReading()) {
             throw new InvalidInputException("meter reading for a month should not be lower than the previous one");
         }
-        //v2
         List<EFraction> fraction = fractionRepository.findByProfile(request.getProfile());
         if (fraction.isEmpty()) {
             throw new NotFoundException("For a Given Profile " + request.getProfile() + " Fraction Data is required. pLease create");
         }
-        //v3
-        // Not Clear
     }
 }

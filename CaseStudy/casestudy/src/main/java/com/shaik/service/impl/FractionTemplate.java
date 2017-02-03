@@ -7,6 +7,8 @@ import com.shaik.mapper.FractionMapper;
 import com.shaik.model.FileDetails;
 import com.shaik.model.Fraction;
 import com.shaik.service.operations.FractionOperations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 @Named("useCaseFractionTemplate")
 public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
         implements FractionOperations<Fraction, Long> {
+
+    Logger LOGGER = LoggerFactory.getLogger(FractionTemplate.class);
 
     private FractionRepository fractionRepository;
 
@@ -61,7 +65,7 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public List<Fraction> readFromCsv(FileDetails file) {
+    public List<Fraction> readFromCsv(FileDetails file) throws IOException {
 
         String line = "";
         String cvsSplitBy = ",";
@@ -85,22 +89,19 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
                     meters.add(data);
                 } catch (Exception e) {
                     fileReadSuccessFully = Boolean.FALSE;
-                    bufferedWriter.write(""+e.getMessage());
+                    bufferedWriter.write("" + e.getMessage());
                 }
 
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            try {
-                bufferedWriter.write(""+e.getMessage());
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+            bufferedWriter.write("" + e.getMessage());
             fileReadSuccessFully = Boolean.FALSE;
         }
         if (fileReadSuccessFully) {
             File fileLocation = new File(file.getFilePath());
-            fileLocation.delete();
+            if (fileLocation.delete()){
+                bufferedWriter.write("FILE deleted successfully");
+            }
         }
         return meters;
     }

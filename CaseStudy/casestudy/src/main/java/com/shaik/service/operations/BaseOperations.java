@@ -2,6 +2,7 @@ package com.shaik.service.operations;
 
 import com.shaik.model.FileDetails;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -17,5 +18,5 @@ public interface BaseOperations<M,ID> {
 
     void delete(ID id);
 
-    List<M> readFromCsv(FileDetails filePath);
+    List<M> readFromCsv(FileDetails filePath) throws IOException;
 }

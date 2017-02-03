@@ -3,6 +3,8 @@ package com.shaik.service.impl;
 import com.shaik.domain.repository.BaseRepository;
 import com.shaik.exception.NotFoundException;
 import com.shaik.service.operations.BaseOperations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
  * Created by jabbars on 1/31/2017.
  */
 public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseOperations<M,ID> {
+
+    Logger LOGGER = LoggerFactory.getLogger(BaseTemplate.class);
 
     protected BaseRepository<E,ID> baseRepository;
     protected Function<E,M>  modelMapper;
