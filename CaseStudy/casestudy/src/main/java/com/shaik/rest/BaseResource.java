@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -113,7 +114,7 @@ public abstract class BaseResource<L,ID> {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.OK)
-    public List<L> readDataFromFile(@RequestBody FileDetails details) {
+    public List<L> readDataFromFile(@RequestBody FileDetails details) throws IOException {
        return baseOperations.readFromCsv(details);
     }
 
