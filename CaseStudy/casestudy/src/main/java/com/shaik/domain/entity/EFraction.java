@@ -69,16 +69,18 @@ public class EFraction {
         this.fraction = fraction;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EFraction fraction = (EFraction) o;
-        return Objects.equals(id, fraction.id);
+        return Objects.equals(profile, fraction.profile) &&
+                month == fraction.month;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(profile, month);
     }
 }

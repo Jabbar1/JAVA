@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
 import javax.validation.constraints.NotNull;
 import java.time.Month;
+import java.util.Objects;
 
 /**
  * Created by jabbars on 1/23/2017.
@@ -49,6 +50,20 @@ public class Fraction {
 
     public Double getFraction() {
         return fraction;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Fraction fraction = (Fraction) o;
+        return Objects.equals(profile, fraction.profile) &&
+                month == fraction.month;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(profile, month);
     }
 
     @JsonPOJOBuilder(buildMethodName = "build", withPrefix = "")

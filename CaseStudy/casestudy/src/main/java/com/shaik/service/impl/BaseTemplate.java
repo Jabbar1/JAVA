@@ -2,6 +2,7 @@ package com.shaik.service.impl;
 
 import com.shaik.domain.repository.BaseRepository;
 import com.shaik.exception.NotFoundException;
+import com.shaik.model.FileDetails;
 import com.shaik.service.operations.BaseOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,25 +10,28 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Common Operations are performed in this class
- *
+ * <p>
  * Created by jabbars on 1/31/2017.
  */
-public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseOperations<M,ID> {
+public abstract class BaseTemplate<M, E, ID extends Serializable> implements BaseOperations<M, ID> {
 
     Logger LOGGER = LoggerFactory.getLogger(BaseTemplate.class);
 
-    protected BaseRepository<E,ID> baseRepository;
-    protected Function<E,M>  modelMapper;
-    protected Function<M,E> entityMapper;
-    protected BiFunction<M,E,E> updateMapper;
+    protected BaseRepository<E, ID> baseRepository;
+    protected Function<E, M> modelMapper;
+    protected Function<M, E> entityMapper;
+    protected BiFunction<M, E, E> updateMapper;
 
     public BaseTemplate(BaseRepository<E, ID> baseRepository,
                         Function<E, M> modelMapper,
@@ -77,6 +81,15 @@ public abstract class BaseTemplate<M,E,ID extends Serializable> implements BaseO
         findOne(id);
         baseRepository.delete(id);
     }
+
+    /**
+     * Override these methods with required implementation
+     * else
+     * Override throwing Exception with status NotImplemented
+     */
+    abstract Set<E> extractDataFromFile(BufferedReader br) throws IOException;
+
+    abstract List<E> validateAndReadData(FileDetails file) throws IOException;
 
     protected E findOne(ID id) {
         E entity = baseRepository.findOne(id);

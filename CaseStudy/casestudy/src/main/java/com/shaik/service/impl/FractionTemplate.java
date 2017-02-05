@@ -17,8 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.*;
 import java.time.Month;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,7 +41,7 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public Fraction create(Fraction request) {
-        isFractionLimitExceedsForProfile(request.getProfile());
+        isFractionLimitExceedsForProfile(request);
         return super.create(request);
     }
 
@@ -50,7 +49,7 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
     @Transactional(propagation = Propagation.REQUIRED)
     public Fraction update(Long id, Fraction request) {
         EFraction fraction = findOne(id);
-        isFractionLimitExceedsForProfile(request.getProfile());
+        isFractionLimitExceedsForProfile(request);
         return super.update(id, request);
     }
 
@@ -59,18 +58,24 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
     public List<Fraction> findAll() {
         List<EFraction> fractions = fractionRepository.findAllByOrderByMonth();
         return fractions.stream()
-                .map(FractionMapper.entity::apply)
+                .map(FractionMapper.entity)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public List<Fraction> readFromCsv(FileDetails file) throws IOException {
+        List<EFraction> validRecords = validateAndReadData(file);
+        return validRecords.stream()
+                .map(FractionMapper.entity)
+                .collect(Collectors.toList());
+    }
 
-        String line = "";
-        String cvsSplitBy = ",";
+    @Override
+    List<EFraction> validateAndReadData(FileDetails file) throws IOException {
+
+        List<EFraction> validRecords = new ArrayList<>();
         Boolean fileReadSuccessFully = Boolean.TRUE;
-        List<Fraction> meters = new ArrayList<>();
         FileWriter fileWriter;
         BufferedWriter bufferedWriter = null;
 
@@ -78,37 +83,59 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
             fileWriter = new FileWriter(file.getLogPath());
             bufferedWriter = new BufferedWriter(fileWriter);
 
-            while ((line = br.readLine()) != null) {
-                String[] fraction = line.split(cvsSplitBy);
-                Fraction data = new Fraction.Builder()
-                        .month(Month.valueOf(fraction[0]))
-                        .profile(fraction[1])
-                        .fraction(Double.parseDouble(fraction[2])).build();
-                try {
-                    data = create(data);
-                    meters.add(data);
-                } catch (Exception e) {
-                    fileReadSuccessFully = Boolean.FALSE;
-                    bufferedWriter.write("" + e.getMessage());
-                }
+            Set<EFraction> meterData = extractDataFromFile(br);
+            Map<String, List<EFraction>> groupedByProfile = meterData.stream()
+                    .collect(Collectors.groupingBy(EFraction::getProfile));
 
+            for (Map.Entry<String, List<EFraction>> fraction : groupedByProfile.entrySet()) {
+
+                Double totalFraction = fraction.getValue().stream().mapToDouble(EFraction::getFraction).sum();
+                if (totalFraction > 1) {
+                    String message = "For a Profile " + fraction.getKey() + " Sum of all Fractions Should be <=1";
+                    LOGGER.info("Error {}", message);
+                    fileReadSuccessFully = Boolean.FALSE;
+                    bufferedWriter.write("" + message);
+                } else {
+                    validRecords.addAll(fraction.getValue());
+                }
             }
+            fractionRepository.save(validRecords);
+
         } catch (Exception e) {
             bufferedWriter.write("" + e.getMessage());
             fileReadSuccessFully = Boolean.FALSE;
         }
         if (fileReadSuccessFully) {
             File fileLocation = new File(file.getFilePath());
-            if (fileLocation.delete()){
+            if (fileLocation.delete()) {
                 bufferedWriter.write("FILE deleted successfully");
             }
         }
-        return meters;
+        return validRecords;
     }
 
-    private void isFractionLimitExceedsForProfile(String profile) {
-        List<EFraction> fractions = fractionRepository.findByProfile(profile);
-        Double existingProfileFraction = 0.0;
+    @Override
+    Set<EFraction> extractDataFromFile(BufferedReader br) throws IOException {
+
+        String line = "";
+        String cvsSplitBy = ",";
+        Set<EFraction> fractions = new HashSet<>();
+
+        while ((line = br.readLine()) != null) {
+            String[] fraction = line.split(cvsSplitBy);
+            EFraction data = new EFraction(
+                    fraction[1],                    // Profile
+                    Month.valueOf(fraction[0]),     // Month
+                    Double.parseDouble(fraction[2]) // Fraction
+            );
+            fractions.add(data);
+        }
+        return fractions;
+    }
+
+    private void isFractionLimitExceedsForProfile(Fraction request) {
+        List<EFraction> fractions = fractionRepository.findByProfile(request.getProfile());
+        Double existingProfileFraction = request.getFraction();
         for (EFraction f : fractions) {
             existingProfileFraction += f.getFraction();
         }

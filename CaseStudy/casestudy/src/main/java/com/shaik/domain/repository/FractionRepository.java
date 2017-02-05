@@ -5,6 +5,7 @@ import com.shaik.model.Fraction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Month;
 import java.util.List;
 
 /**
@@ -14,5 +15,6 @@ import java.util.List;
 public interface FractionRepository extends BaseRepository<EFraction,Long> {
 
     List<EFraction> findByProfile(String profile);
+    EFraction findByProfileAndMonth(String profile, Month month);
     List<EFraction> findAllByOrderByMonth();
 }

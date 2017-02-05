@@ -87,11 +87,13 @@ public class EMeter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EMeter meter = (EMeter) o;
-        return Objects.equals(id, meter.id);
+        return Objects.equals(connectionId, meter.connectionId) &&
+                Objects.equals(profile, meter.profile) &&
+                month == meter.month;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(connectionId, profile, month);
     }
 }
