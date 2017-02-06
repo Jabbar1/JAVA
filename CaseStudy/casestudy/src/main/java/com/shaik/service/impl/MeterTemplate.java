@@ -72,6 +72,7 @@ public class MeterTemplate extends BaseTemplate<Meter, EMeter, Long>
     @Override
     List<EMeter> validateAndReadData(FileDetails file) throws IOException {
         List<EMeter> validRecords = new ArrayList<>();
+        isFileValid(file.getFilePath());
 
         Boolean fileReadSuccessFully = Boolean.TRUE;
         FileWriter fileWriter;

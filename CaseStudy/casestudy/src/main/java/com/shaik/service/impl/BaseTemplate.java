@@ -1,6 +1,7 @@
 package com.shaik.service.impl;
 
 import com.shaik.domain.repository.BaseRepository;
+import com.shaik.exception.InvalidInputException;
 import com.shaik.exception.NotFoundException;
 import com.shaik.model.FileDetails;
 import com.shaik.service.operations.BaseOperations;
@@ -97,5 +98,11 @@ public abstract class BaseTemplate<M, E, ID extends Serializable> implements Bas
             throw new NotFoundException("Given Fraction for a Profile Not exist with ID " + id + ", Please Provide Valid data");
         }
         return entity;
+    }
+
+    protected void isFileValid(String file){
+        if (!file.endsWith(".csv")){
+            throw new InvalidInputException("Only \".csv\" files can be Imported");
+        }
     }
 }

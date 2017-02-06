@@ -75,6 +75,7 @@ public class FractionTemplate extends BaseTemplate<Fraction, EFraction, Long>
     List<EFraction> validateAndReadData(FileDetails file) throws IOException {
 
         List<EFraction> validRecords = new ArrayList<>();
+        isFileValid(file.getFilePath());
         Boolean fileReadSuccessFully = Boolean.TRUE;
         FileWriter fileWriter;
         BufferedWriter bufferedWriter = null;
